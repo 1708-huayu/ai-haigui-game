@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Room from './pages/Room'
 import Summary from './pages/Summary'
 import Game from './pages/Game'
+import Result from './pages/Result'
 
 // 错误边界组件
 class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
@@ -44,6 +45,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/game/:id" element={<Game />} />
+            <Route path="/result" element={<Result />} />
             <Route path="/room/:roomId" element={<Room />} />
             <Route path="/room/new" element={<Room />} />
             <Route path="/summary/:roomId" element={<Summary />} />
