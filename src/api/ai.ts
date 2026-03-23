@@ -10,7 +10,7 @@ const API_CONFIG = {
   model: 'gpt-3.5-turbo',
 }
 
-// 海龟汤Prompt模板
+// 海龟汤Prompt模板（包含示例对话）
 const createPrompt = (question: string, story: IStory): string => {
   return `你是一个海龟汤游戏的主持人。玩家会提出是非题，你需要根据给定的故事来判断。
 
@@ -18,15 +18,48 @@ const createPrompt = (question: string, story: IStory): string => {
 1. 你只能回答"是"、"否"或"无关"
 2. 玩家的问题必须是关于故事表面的
 3. 你需要根据汤底来判断玩家的问题是否正确
+4. 无论玩家问什么，你都只能用这三个词之一回答，不要添加任何解释
 
 故事标题：${story.title}
 汤面：${story.surface}
 汤底：${story.bottom}
 关键线索：${story.winConditions.join('、')}
 
-玩家问题：${question}
+示例对话：
+问题：这个人是不是遇到了危险？
+回答：否。
 
-请根据以上信息，判断玩家的问题。回答格式必须是"是"、"否"或"无关"，不要添加任何解释。`
+问题：他是不是故意去那个地方的？
+回答：是。
+
+问题：他今天穿什么颜色的衣服？
+回答：无关。
+
+问题：你今天心情好吗？
+回答：无关。
+
+现在请回答玩家的问题。只回答"是"、"否"或"无关"，不要添加任何其他文字。
+
+玩家问题：${question}
+回答：`
+}
+
+// 解析AI回答，确保只返回"是"、"否"或"无关"
+const parseAIResponse = (content: string): AIResponse => {
+  // 清理内容，移除标点符号和空格
+  const cleanContent = content.replace(/[，。！？、\s]/g, '').toLowerCase()
+  
+  // 检查是否包含关键词
+  if (cleanContent.includes('是') || cleanContent === '是') {
+    return '是'
+  } else if (cleanContent.includes('否') || cleanContent === '否') {
+    return '否'
+  } else if (cleanContent.includes('无关') || cleanContent === '无关') {
+    return '无关'
+  }
+  
+  // 如果回答不符合规范，返回"无关"作为默认值
+  return '无关'
 }
 
 // 模拟AI回答（用于开发测试）
@@ -67,6 +100,17 @@ export const askAI = async (question: string, story: IStory): Promise<AIResponse
     return Math.random() > 0.5 ? '是' : '否'
   }
 
+  // 检查是否是无效问题（不是是非题）
+  const invalidPatterns = [
+    /为什么/, /怎么/, /什么/, /谁/, /哪里/, /多少/, /几个/,
+    /吗[？?]?$/, /呢[？?]?$/, /吧[？?]?$/,
+  ]
+  
+  const isInvalidQuestion = invalidPatterns.some(pattern => pattern.test(question))
+  if (isInvalidQuestion) {
+    return '无关'
+  }
+
   // 默认返回无关
   return '无关'
 }
@@ -95,7 +139,8 @@ export const askAIReal = async (question: string, story: IStory): Promise<AIResp
           },
         ],
         max_tokens: 10,
-        temperature: 0.3,
+        temperature: 0.1, // 降低温度，提高确定性
+        top_p: 0.1, // 降低采样多样性
       }),
     })
 
@@ -107,13 +152,7 @@ export const askAIReal = async (question: string, story: IStory): Promise<AIResp
     const content = data.choices[0]?.message?.content?.trim() || ''
 
     // 解析AI回答
-    if (content.includes('是')) {
-      return '是'
-    } else if (content.includes('否')) {
-      return '否'
-    } else {
-      return '无关'
-    }
+    return parseAIResponse(content)
   } catch (error) {
     console.error('AI API调用失败:', error)
     // 发生错误时返回模拟回答
@@ -168,4 +207,41 @@ export const checkWinCondition = (question: string, story: IStory): boolean => {
   
   // 如果匹配了大部分关键线索和汤底关键词，认为猜中
   return allConditionsMatched || matchedKeywords.length >= bottomKeywords.length * 0.7
+}
+
+// 验证问题格式（是否是非题）
+export const isValidQuestion = (question: string): boolean => {
+  const trimmedQuestion = question.trim()
+  
+  // 检查是否为空
+  if (!trimmedQuestion) {
+    return false
+  }
+  
+  // 检查是否以问号结尾
+  if (!trimmedQuestion.endsWith('?') && !trimmedQuestion.endsWith('？')) {
+    // 如果不是问号结尾，检查是否是陈述句（可能是猜答案）
+    const statementPatterns = [
+      /是因为/, /因为/, /所以/, /导致/, /造成/, /原因/,
+      /他.*是/, /她.*是/, /它.*是/, /这.*是/, /那.*是/,
+    ]
+    
+    const isStatement = statementPatterns.some(pattern => pattern.test(trimmedQuestion))
+    if (isStatement) {
+      return true // 允许陈述句作为猜答案
+    }
+    
+    return false
+  }
+  
+  // 检查是否是疑问句
+  const questionPatterns = [
+    /吗$/, /呢$/, /吧$/, /是不是/, /会不会/, /能不能/, /可以.*吗/,
+    /是否/, /有没有/, /是什么/, /为什么/, /怎么/, /谁/, /哪里/,
+  ]
+  
+  const isQuestion = questionPatterns.some(pattern => pattern.test(trimmedQuestion))
+  
+  // 允许是非题和猜答案
+  return isQuestion || trimmedQuestion.length > 2
 }

@@ -28,10 +28,49 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
     scrollToBottom()
   }, [messages])
 
+  // 验证问题格式
+  const validateQuestion = (question: string): boolean => {
+    const trimmedQuestion = question.trim()
+    
+    // 检查是否为空
+    if (!trimmedQuestion) {
+      return false
+    }
+    
+    // 检查长度
+    if (trimmedQuestion.length < 2) {
+      return false
+    }
+    
+    // 检查是否是无效问题（不是是非题）
+    const invalidPatterns = [
+      /^你好/, /^hi/, /^hello/, /^在吗/, /^在不在/,
+      /^谢谢/, /^感谢/, /^thanks/, /^thank you/,
+      /^你是谁/, /^你叫什么/, /^你是什么/,
+    ]
+    
+    const isInvalid = invalidPatterns.some(pattern => 
+      pattern.test(trimmedQuestion.toLowerCase())
+    )
+    
+    return !isInvalid
+  }
+
   // 处理发送消息
   const handleSend = async () => {
     const trimmedValue = inputValue.trim()
     if (!trimmedValue || isLoading) return
+
+    // 验证问题格式
+    if (!validateQuestion(trimmedValue)) {
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'ai',
+        content: '请输入关于故事的是非题，例如："这个人是不是遇到了危险？"或"他是不是故意去那个地方的？"',
+      }
+      setMessages(prev => [...prev, errorMessage])
+      return
+    }
 
     // 添加用户消息
     const userMessage: ChatMessage = {
@@ -90,10 +129,20 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-slate-500 text-center">
-              开始你的推理之旅<br />
-              <span className="text-sm">输入问题，AI主持人会回答"是"、"否"或"无关"</span>
-            </p>
+            <div className="text-center">
+              <p className="text-slate-500 mb-2">开始你的推理之旅</p>
+              <p className="text-slate-600 text-sm">
+                输入是非题，AI主持人会回答"是"、"否"或"无关"
+              </p>
+              <div className="mt-4 text-left text-slate-500 text-sm">
+                <p className="mb-1">示例问题：</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>"这个人是不是遇到了危险？"</li>
+                  <li>"他是不是故意去那个地方的？"</li>
+                  <li>"这件事是不是发生在晚上？"</li>
+                </ul>
+              </div>
+            </div>
           </div>
         ) : (
           messages.map((message) => (
@@ -145,7 +194,7 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="输入你的问题..."
+              placeholder="输入你的问题，例如：'这个人是不是遇到了危险？'"
               disabled={isLoading}
               className="w-full bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             />
