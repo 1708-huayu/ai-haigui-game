@@ -1,7 +1,7 @@
 # AI 海龟汤游戏前端开发指令 (React + TS)
 
 ## 1. 项目与架构概述
-- **项目定位**：基于 React + TypeScript + Tailwind CSS 开发的 AI 驱动多人情境推理（海龟汤）Web 应用。
+- **项目定位**：基于 React + TypeScript + Tailwind CSS + shadcn-ui 开发的 AI 驱动多人情境推理（海龟汤）Web 应用。
 - **核心交互**：包含大厅房间流转、WebSocket 实时公屏聊天、多人动态投票共识机制，以及与 AI 主持人的多轮对话渲染。
 - **状态管理**：引入 Zustand（或同等轻量级库）处理复杂的全局状态（如：当前房间在线玩家、投票倒计时、实时弹幕流）。
 
