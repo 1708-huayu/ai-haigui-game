@@ -45,7 +45,7 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
     setIsLoading(true)
 
     try {
-      // 模拟AI回复（如果有回调则使用回调）
+      // 调用AI回调
       let aiResponse = '否。'
       if (onSendMessage) {
         aiResponse = await onSendMessage(trimmedValue)
@@ -103,8 +103,8 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
         
         {/* 加载指示器 */}
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 mr-3">
+          <div className="flex justify-start mb-4">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 mr-3 flex-shrink-0">
               <svg
                 className="w-4 h-4 text-white animate-spin"
                 fill="none"
@@ -120,10 +120,13 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
               </svg>
             </div>
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl px-4 py-3 text-slate-200">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-slate-300">思考中</span>
+                <div className="flex space-x-1">
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
             </div>
           </div>
