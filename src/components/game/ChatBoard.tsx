@@ -1,18 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import MessageBubble from './MessageBubble';
-
-interface Message {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  type: 'system' | 'chat' | 'judgment';
-  aiResult?: 'YES' | 'NO' | 'IRRELEVANT' | 'WIN';
-  timestamp: number;
-}
+import Message from './Message';
 
 const ChatBoard: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     {
       id: '1',
       senderId: 'ai',
@@ -54,7 +44,7 @@ const ChatBoard: React.FC = () => {
 
   const handleSend = () => {
     if (inputValue.trim()) {
-      const newMessage: Message = {
+      const newMessage = {
         id: Date.now().toString(),
         senderId: 'current-player',
         senderName: '我',
@@ -68,7 +58,7 @@ const ChatBoard: React.FC = () => {
       
       // 模拟AI回复
       setTimeout(() => {
-        const aiResponse: Message = {
+        const aiResponse = {
           id: (Date.now() + 1).toString(),
           senderId: 'ai',
           senderName: 'AI主持人',
@@ -95,9 +85,9 @@ const ChatBoard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <Message key={message.id} message={message} />
         ))}
         <div ref={messagesEndRef} />
       </div>
