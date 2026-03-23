@@ -3,15 +3,16 @@ import { useParams } from 'react-router-dom';
 import FrostedCard from '../components/common/FrostedCard';
 import GlassButton from '../components/common/GlassButton';
 import ChatBox from '../components/game/ChatBox';
-import StoryReveal from '../components/game/StoryReveal';
 import { stories } from '../stories';
 import { IStory, IMessage } from '../types/models';
+import { getAIJudgment } from '../api';
 
 const Game: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [currentStory, setCurrentStory] = useState<IStory | null>(null);
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [showBottom, setShowBottom] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // 根据URL参数获取故事
@@ -41,28 +42,67 @@ const Game: React.FC = () => {
     }
   }, [id]);
 
-  const handleSendMessage = (content: string) => {
-    // 模拟AI回复
-    setTimeout(() => {
-      const responses = [
-        "这是一个有趣的提问，但还不能确定答案。",
-        "这个问题需要更多的信息才能回答。",
-        "根据现有信息，我无法给出确切答案。",
-        "请继续提问，我会尽力回答。",
-        "这是一个关键问题，但答案并不简单。"
-      ];
+  const handleSendMessage = async (content: string) => {
+    if (isLoading) return; // 防止重复提交
+    
+    // 添加用户消息
+    const userMessage: IMessage = {
+      id: Date.now().toString(),
+      senderId: 'current-player',
+      senderName: '我',
+      content: content,
+      type: 'chat',
+      timestamp: Date.now()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      // 调用AI API获取判断
+      if (!currentStory) {
+        throw new Error('当前故事未加载');
+      }
       
+      const aiResult = await getAIJudgment(content, currentStory);
+      
+      // 创建AI响应消息
       const aiResponse: IMessage = {
         id: (Date.now() + 1).toString(),
         senderId: 'ai',
         senderName: 'AI主持人',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: aiResult.reply,
         type: 'judgment',
-        aiResult: Math.random() > 0.7 ? 'YES' : Math.random() > 0.5 ? 'NO' : 'IRRELEVANT',
+        aiResult: aiResult.isWin ? 'WIN' : aiResult.decision,
         timestamp: Date.now()
       };
+      
       setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+      
+      // 如果AI判断玩家获胜，则显示胜利信息
+      if (aiResult.isWin) {
+        setTimeout(() => {
+          alert('恭喜！你成功推理出了真相！');
+          setShowBottom(true);
+        }, 500);
+      }
+    } catch (error: any) {
+      console.error('AI调用错误:', error);
+      
+      // 添加错误消息
+      const errorMessage: IMessage = {
+        id: (Date.now() + 1).toString(),
+        senderId: 'ai',
+        senderName: 'AI主持人',
+        content: error.message || 'AI暂时无法回应，请稍后再试',
+        type: 'system',
+        timestamp: Date.now()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleShowBottom = () => {
@@ -130,12 +170,14 @@ const Game: React.FC = () => {
             <GlassButton 
               variant="secondary" 
               onClick={handleShowBottom}
+              disabled={isLoading}
             >
               查看汤底
             </GlassButton>
             <GlassButton 
               variant="outline" 
               onClick={handleEndGame}
+              disabled={isLoading}
             >
               结束游戏
             </GlassButton>
