@@ -10,7 +10,7 @@ export const askAI = async (question: string, story: IStory): Promise<any> => {
     throw new Error('AI API Key未配置，请在环境变量中设置VITE_AI_API_KEY或VITE_OPENAI_API_KEY');
   }
 
-  // 构建符合AGENTS.md中Prompt模板的请求
+  // 构建符合AGENTS.md中Prompt模板的请求，增加了示例对话
   const systemPrompt = `你是一个无情且神秘的海龟汤游戏法官。
 
 【游戏规则】
@@ -28,6 +28,16 @@ export const askAI = async (question: string, story: IStory): Promise<any> => {
 2. "is_win": 布尔值 (true/false)。评估玩家的提问和历史对话，是否已经推导出了[核心通关条件]。如果没有，必须为 false。
 3. "reply": 简短的文字回复。如果是 YES/NO/IRRELEVANT，可附带极少量的氛围感润色（如："是的，你触碰到了冰冷的事实。"）。如果是胜利，输出祝贺语。
 
+【示例对话】
+Q: "死者是男性吗？"
+A: {"decision": "YES", "is_win": false, "reply": "是的，死者是一名年轻男子。"}
+
+Q: "他是被刀刺死的吗？"
+A: {"decision": "NO", "is_win": false, "reply": "不，他身上没有刀伤。"}
+
+Q: "请告诉我真相。"
+A: {"decision": "IRRELEVANT", "is_win": false, "reply": "很遗憾，我不能直接告诉你真相。请继续提问。"}
+
 【当前玩家提问】
 ${question}`;
 
@@ -44,7 +54,7 @@ ${question}`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question }
         ],
-        temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.7'),
+        temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.3'), // 降低温度以提高一致性
         max_tokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS || '200'),
         response_format: { type: 'json_object' } // 确保返回JSON格式
       })
@@ -77,6 +87,33 @@ ${question}`;
   }
 };
 
+// 验证AI响应是否符合规范
+const validateAIResponse = (response: any): boolean => {
+  if (!response || typeof response !== 'object') {
+    return false;
+  }
+  
+  const { decision, is_win, reply } = response;
+  
+  // 检查decision是否为允许的值
+  const validDecisions = ['YES', 'NO', 'IRRELEVANT', 'WIN'];
+  if (!validDecisions.includes(decision)) {
+    return false;
+  }
+  
+  // 检查is_win是否为布尔值
+  if (typeof is_win !== 'boolean') {
+    return false;
+  }
+  
+  // 检查reply是否为字符串
+  if (typeof reply !== 'string' || reply.trim() === '') {
+    return false;
+  }
+  
+  return true;
+};
+
 // 专门用于获取AI判断的函数
 export const getAIJudgment = async (question: string, story: IStory): Promise<{
   decision: 'YES' | 'NO' | 'IRRELEVANT' | 'WIN';
@@ -86,10 +123,20 @@ export const getAIJudgment = async (question: string, story: IStory): Promise<{
   try {
     const result = await askAI(question, story);
     
+    // 验证AI响应是否符合规范
+    if (!validateAIResponse(result)) {
+      console.warn('AI返回了不符合规范的响应:', result);
+      return {
+        decision: 'IRRELEVANT',
+        isWin: false,
+        reply: '抱歉，我无法理解你的问题，请换一种方式提问。'
+      };
+    }
+    
     return {
-      decision: result.decision || 'IRRELEVANT',
-      isWin: result.is_win || false,
-      reply: result.reply || 'AI未能提供有效回复'
+      decision: result.decision as 'YES' | 'NO' | 'IRRELEVANT' | 'WIN',
+      isWin: result.is_win,
+      reply: result.reply
     };
   } catch (error) {
     console.error('获取AI判断时出错:', error);
