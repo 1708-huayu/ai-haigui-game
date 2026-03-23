@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Home from './pages/Home'
 import Room from './pages/Room'
 import Summary from './pages/Summary'
+import Game from './pages/Game'
 
 // 错误边界组件
 class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
@@ -42,6 +43,7 @@ function App() {
         <div className="App">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/game/:id" element={<Game />} />
             <Route path="/room/:roomId" element={<Room />} />
             <Route path="/room/new" element={<Room />} />
             <Route path="/summary/:roomId" element={<Summary />} />
