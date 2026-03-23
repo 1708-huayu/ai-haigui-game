@@ -9,14 +9,17 @@ interface ChatMessage {
   content: string
 }
 
+type GameStatus = 'playing' | 'won' | 'abandoned' | 'revealed'
+
 export default function Result() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   const story = stories.find(s => s.id === id)
   
-  // 从location state获取对话历史
+  // 从location state获取对话历史和游戏状态
   const chatHistory = (location.state as { messages?: ChatMessage[] })?.messages || []
+  const gameStatus = (location.state as { gameStatus?: GameStatus })?.gameStatus || 'revealed'
   
   // 动画状态
   const [isRevealing, setIsRevealing] = useState(true)
@@ -41,6 +44,59 @@ export default function Result() {
   const handleBackToGame = () => {
     navigate(`/game/${id}`)
   }
+
+  // 获取状态显示
+  const getStatusDisplay = () => {
+    switch (gameStatus) {
+      case 'won':
+        return { 
+          text: '恭喜你猜中真相！', 
+          color: 'text-amber-400', 
+          bg: 'bg-amber-500/20',
+          icon: (
+            <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )
+        }
+      case 'revealed':
+        return { 
+          text: '你选择了查看汤底', 
+          color: 'text-blue-400', 
+          bg: 'bg-blue-500/20',
+          icon: (
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          )
+        }
+      case 'abandoned':
+        return { 
+          text: '游戏已放弃', 
+          color: 'text-slate-400', 
+          bg: 'bg-slate-500/20',
+          icon: (
+            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          )
+        }
+      default:
+        return { 
+          text: '游戏结束', 
+          color: 'text-slate-400', 
+          bg: 'bg-slate-500/20',
+          icon: (
+            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )
+        }
+    }
+  }
+
+  const status = getStatusDisplay()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -93,7 +149,12 @@ export default function Result() {
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
             {story?.title || '未知故事'}
           </h1>
-          <p className="text-slate-400">游戏结束</p>
+          
+          {/* Game status */}
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${status.bg} ${status.color} border border-current/20 mb-4`}>
+            {status.icon}
+            <span className="font-medium">{status.text}</span>
+          </div>
         </div>
 
         {/* Main content */}
@@ -165,7 +226,9 @@ export default function Result() {
             </div>
             <div className="bg-white/5 backdrop-blur-lg rounded-xl border border-white/10 p-4 text-center">
               <p className="text-slate-400 text-sm mb-1">状态</p>
-              <p className="text-2xl font-bold text-emerald-400">已完成</p>
+              <p className={`text-2xl font-bold ${status.color}`}>
+                {status.text}
+              </p>
             </div>
           </div>
 
