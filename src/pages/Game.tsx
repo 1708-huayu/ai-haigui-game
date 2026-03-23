@@ -162,6 +162,7 @@ const Game: React.FC = () => {
             <ChatBox 
               initialMessages={messages} 
               onSendMessage={handleSendMessage} 
+              isLoading={isLoading}
             />
           </FrostedCard>
 
