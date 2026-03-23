@@ -9,7 +9,7 @@ export default function GameCard({ story }: GameCardProps) {
   const navigate = useNavigate()
 
   const handleClick = () => {
-    navigate(`/room?storyId=${story.id}`)
+    navigate(`/game/${story.id}`)
   }
 
   const getDifficultyColor = (difficulty: IStory['difficulty']) => {
