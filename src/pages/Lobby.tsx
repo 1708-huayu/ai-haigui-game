@@ -4,6 +4,7 @@ import BentoGrid from '../components/layout/BentoGrid';
 import BentoItem from '../components/layout/BentoItem';
 import FrostedCard from '../components/common/FrostedCard';
 import GlassButton from '../components/common/GlassButton';
+import GameCard from '../components/game/GameCard';
 import { stories } from '../stories';
 import { IStory } from '../types/models';
 
@@ -58,45 +59,9 @@ const Lobby: React.FC = () => {
           <BentoItem size="lg">
             <FrostedCard className="h-full p-6">
               <h2 className="text-xl font-semibold text-white mb-4">热门剧本</h2>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                 {stories.slice(0, 3).map((story) => (
-                  <div 
-                    key={story.id} 
-                    className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 cursor-pointer transition-all ${
-                      selectedStory?.id === story.id ? 'ring-2 ring-amber-400/50' : 'hover:border-amber-400/30'
-                    }`}
-                    onClick={() => setSelectedStory(story)}
-                  >
-                    <h3 className="font-medium text-white">{story.title}</h3>
-                    <p className="text-slate-300 text-sm mt-1">
-                      难度: {getDifficultyText(story.difficulty)} | 时长: {story.estimatedTime}分钟
-                    </p>
-                    <p className="text-slate-400 text-sm mt-2 line-clamp-2">{story.surface}</p>
-                    <div className="mt-3 flex gap-2">
-                      <GlassButton 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: 显示故事详情模态框
-                          alert(`故事详情:\n${story.surface}`);
-                        }}
-                      >
-                        查看详情
-                      </GlassButton>
-                      <GlassButton 
-                        size="sm" 
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // 创建使用此故事的房间
-                          const roomId = `room_${Date.now()}_${story.id}`;
-                          navigate(`/room/${roomId}`);
-                        }}
-                      >
-                        创建房间
-                      </GlassButton>
-                    </div>
-                  </div>
+                  <GameCard key={story.id} story={story} />
                 ))}
               </div>
             </FrostedCard>

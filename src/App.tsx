@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Lobby from './pages/Lobby'
 import Room from './pages/Room'
 import Summary from './pages/Summary'
@@ -43,6 +43,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Lobby />} />
             <Route path="/room/:roomId" element={<Room />} />
+            <Route path="/room/new" element={<Room />} />
             <Route path="/summary/:roomId" element={<Summary />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
