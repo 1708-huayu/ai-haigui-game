@@ -23,9 +23,9 @@ export interface IPlayer {
 export interface IStory {
   id: string;
   title: string;
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   surface: string;      // 汤面（玩家已知）
   bottom: string;       // 汤底（绝对机密）
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   estimatedTime: number; // 预估时长（分钟）
   winConditions: string[]; // 核心通关条件（必须全部猜中才算赢）
 }

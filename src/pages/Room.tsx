@@ -1,15 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import FrostedCard from '../components/common/FrostedCard';
 import ChatBoard from '../components/game/ChatBoard';
 import StoryReveal from '../components/game/StoryReveal';
+import { useParams } from 'react-router-dom';
+import { stories } from '../stories';
+import { IStory } from '../types/models';
 
 const Room: React.FC = () => {
+  const { roomId } = useParams<{ roomId: string }>();
+  const [selectedStory, setSelectedStory] = useState<IStory | null>(null);
+
+  useEffect(() => {
+    // 在实际应用中，这里应该从服务器获取房间信息
+    // 现在我们模拟从URL或存储中获取故事信息
+    const mockStoryId = 'story-001'; // 这里应该是从房间信息中获取的实际故事ID
+    const story = stories.find(s => s.id === mockStoryId);
+    if (story) {
+      setSelectedStory(story);
+    }
+  }, [roomId]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-6xl mx-auto">
         <header className="py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">
-            房间: #ABC123
+            房间: {roomId || '#ABC123'}
           </h1>
           <div className="flex gap-2">
             <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">在线</span>
@@ -35,10 +51,14 @@ const Room: React.FC = () => {
 
             <FrostedCard className="p-4">
               <h2 className="text-lg font-semibold text-white mb-3">故事信息</h2>
-              <StoryReveal 
-                surface="一个男人在酒吧喝完酒后突然死亡，身上没有外伤，法医检验发现他体内有剧毒物质。"
-                isRevealed={false}
-              />
+              {selectedStory ? (
+                <StoryReveal 
+                  story={selectedStory}
+                  isRevealed={false}
+                />
+              ) : (
+                <p className="text-slate-400">正在加载故事信息...</p>
+              )}
             </FrostedCard>
           </div>
 

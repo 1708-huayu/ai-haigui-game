@@ -1,10 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BentoGrid from '../components/layout/BentoGrid';
 import BentoItem from '../components/layout/BentoItem';
 import FrostedCard from '../components/common/FrostedCard';
 import GlassButton from '../components/common/GlassButton';
+import { stories } from '../stories';
+import { IStory } from '../types/models';
 
 const Lobby: React.FC = () => {
+  const [selectedStory, setSelectedStory] = useState<IStory | null>(null);
+  const navigate = useNavigate();
+
+  const getDifficultyText = (difficulty: string) => {
+    switch(difficulty) {
+      case 'easy': return '入门';
+      case 'medium': return '中等';
+      case 'hard': return '困难';
+      case 'expert': return '专家';
+      default: return '未知';
+    }
+  };
+
+  const handleCreateRoom = () => {
+    if (selectedStory) {
+      // 在实际应用中，这里应该调用API创建房间
+      // 现在我们模拟生成一个房间ID并导航到房间页面
+      const roomId = `room_${Date.now()}`;
+      navigate(`/room/${roomId}`);
+    }
+  };
+
+  const handleQuickJoin = () => {
+    // 在实际应用中，这里应该调用API快速匹配房间
+    // 现在我们模拟加入一个随机房间
+    const roomId = `room_${Date.now()}`;
+    navigate(`/room/${roomId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-6xl mx-auto">
@@ -19,7 +51,7 @@ const Lobby: React.FC = () => {
           <BentoItem size="md">
             <FrostedCard className="h-full flex flex-col items-center justify-center p-6 text-center">
               <h2 className="text-xl font-semibold text-white mb-4">快速匹配</h2>
-              <GlassButton>随机加入房间</GlassButton>
+              <GlassButton onClick={handleQuickJoin}>随机加入房间</GlassButton>
             </FrostedCard>
           </BentoItem>
 
@@ -27,13 +59,42 @@ const Lobby: React.FC = () => {
             <FrostedCard className="h-full p-6">
               <h2 className="text-xl font-semibold text-white mb-4">热门剧本</h2>
               <div className="space-y-4">
-                {[1, 2, 3].map((item) => (
-                  <div key={item} className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
-                    <h3 className="font-medium text-white">神秘案件 #{item}</h3>
-                    <p className="text-slate-300 text-sm mt-1">难度: 中等 | 时长: 15分钟</p>
+                {stories.slice(0, 3).map((story) => (
+                  <div 
+                    key={story.id} 
+                    className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 cursor-pointer transition-all ${
+                      selectedStory?.id === story.id ? 'ring-2 ring-amber-400/50' : 'hover:border-amber-400/30'
+                    }`}
+                    onClick={() => setSelectedStory(story)}
+                  >
+                    <h3 className="font-medium text-white">{story.title}</h3>
+                    <p className="text-slate-300 text-sm mt-1">
+                      难度: {getDifficultyText(story.difficulty)} | 时长: {story.estimatedTime}分钟
+                    </p>
+                    <p className="text-slate-400 text-sm mt-2 line-clamp-2">{story.surface}</p>
                     <div className="mt-3 flex gap-2">
-                      <GlassButton size="sm">查看详情</GlassButton>
-                      <GlassButton size="sm" variant="secondary">创建房间</GlassButton>
+                      <GlassButton 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: 显示故事详情模态框
+                          alert(`故事详情:\n${story.surface}`);
+                        }}
+                      >
+                        查看详情
+                      </GlassButton>
+                      <GlassButton 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // 创建使用此故事的房间
+                          const roomId = `room_${Date.now()}_${story.id}`;
+                          navigate(`/room/${roomId}`);
+                        }}
+                      >
+                        创建房间
+                      </GlassButton>
                     </div>
                   </div>
                 ))}
@@ -57,12 +118,26 @@ const Lobby: React.FC = () => {
                   placeholder="房间名称" 
                   className="w-full bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
-                <select className="w-full bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
-                  <option>选择剧本</option>
-                  <option>神秘案件 #1</option>
-                  <option>神秘案件 #2</option>
+                <select 
+                  className="w-full bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  value={selectedStory?.id || ''}
+                  onChange={(e) => {
+                    const story = stories.find(s => s.id === e.target.value);
+                    if (story) setSelectedStory(story);
+                  }}
+                >
+                  <option value="">选择剧本</option>
+                  {stories.map(story => (
+                    <option key={story.id} value={story.id}>{story.title}</option>
+                  ))}
                 </select>
-                <GlassButton className="w-full">创建房间</GlassButton>
+                <GlassButton 
+                  className="w-full"
+                  disabled={!selectedStory}
+                  onClick={handleCreateRoom}
+                >
+                  {selectedStory ? `使用 "${selectedStory.title}" 创建房间` : '请选择剧本'}
+                </GlassButton>
               </div>
             </FrostedCard>
           </BentoItem>
