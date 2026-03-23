@@ -14,6 +14,7 @@ const Game: React.FC = () => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'ended'>('playing'); // 游戏状态管理
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // 根据URL参数获取故事
@@ -58,6 +59,7 @@ const Game: React.FC = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    setErrorMessage(null); // 清除之前的错误
 
     try {
       // 调用AI API获取判断
@@ -85,17 +87,20 @@ const Game: React.FC = () => {
         setGameStatus('won');
         setTimeout(() => {
           // 跳转到结果页面
-          navigate(`/result?storyId=${currentStory?.id}`, { state: { conversationHistory: messages, finalMessage: aiResponse } });
+          navigate(`/result?storyId=${currentStory?.id}`, { state: { conversationHistory: [...messages, userMessage, aiResponse] } });
         }, 1500);
       }
     } catch (error: any) {
       console.error('AI调用错误:', error);
       
-      // 添加错误消息
+      // 设置错误消息，将在ChatBox中显示
+      setErrorMessage(error.message || 'AI暂时无法回应，请稍后再试');
+      
+      // 添加错误消息到聊天记录
       const errorMessage: IMessage = {
         id: (Date.now() + 1).toString(),
-        senderId: 'ai',
-        senderName: 'AI主持人',
+        senderId: 'system',
+        senderName: '系统',
         content: error.message || 'AI暂时无法回应，请稍后再试',
         type: 'system',
         timestamp: Date.now()
@@ -143,10 +148,10 @@ const Game: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto">
         <header className="py-6 text-center">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500 animate-fade-in">
             AI 海龟汤
           </h1>
-          <p className="text-slate-300 mt-2">
+          <p className="text-slate-300 mt-2 transition-all duration-300">
             {gameStatus === 'won' ? '推理成功！' : 
              gameStatus === 'ended' ? '游戏已结束' : 
              '与AI进行推理游戏'}
@@ -155,7 +160,7 @@ const Game: React.FC = () => {
 
         <div className="space-y-6">
           {/* 故事信息区域 */}
-          <FrostedCard className="p-6">
+          <FrostedCard className="p-6 animate-slide-up">
             <div className="text-center mb-4">
               <h2 className="text-2xl font-bold text-white mb-2">{currentStory.title}</h2>
               <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm">
@@ -172,20 +177,22 @@ const Game: React.FC = () => {
           </FrostedCard>
 
           {/* 聊天区域 */}
-          <FrostedCard className="h-[400px] flex flex-col">
+          <FrostedCard className="h-[400px] flex flex-col animate-slide-up delay-100">
             <ChatBox 
               initialMessages={messages} 
               onSendMessage={handleSendMessage} 
               isLoading={isLoading}
+              errorMessage={errorMessage}
             />
           </FrostedCard>
 
           {/* 底部按钮区域 */}
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4 animate-slide-up delay-200">
             <GlassButton 
               variant="secondary" 
               onClick={handleShowBottom}
               disabled={isLoading}
+              className="transform hover:scale-105 active:scale-95 transition-transform"
             >
               查看汤底
             </GlassButton>
@@ -193,12 +200,14 @@ const Game: React.FC = () => {
               variant="outline" 
               onClick={handleAbortGame}
               disabled={isLoading}
+              className="transform hover:scale-105 active:scale-95 transition-transform"
             >
               放弃游戏
             </GlassButton>
             <GlassButton 
               onClick={handleEndGame}
               disabled={isLoading}
+              className="transform hover:scale-105 active:scale-95 transition-transform"
             >
               返回大厅
             </GlassButton>
