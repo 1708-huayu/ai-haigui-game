@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Message from './Message';
+import React, { useState, useEffect } from 'react';
+import ChatBox from './ChatBox';
+import { IMessage } from '../../types/models';
 
 const ChatBoard: React.FC = () => {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<IMessage[]>([
     {
       id: '1',
       senderId: 'ai',
@@ -38,80 +39,28 @@ const ChatBoard: React.FC = () => {
       timestamp: Date.now() - 5000
     }
   ]);
-  
-  const [inputValue, setInputValue] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
-    if (inputValue.trim()) {
-      const newMessage = {
-        id: Date.now().toString(),
-        senderId: 'current-player',
-        senderName: '我',
-        content: inputValue,
-        type: 'chat',
+  const handleSendMessage = (content: string) => {
+    // 模拟AI回复
+    setTimeout(() => {
+      const aiResponse: IMessage = {
+        id: (Date.now() + 1).toString(),
+        senderId: 'ai',
+        senderName: 'AI主持人',
+        content: '这是一个有趣的提问，但还不能确定答案。',
+        type: 'judgment',
+        aiResult: Math.random() > 0.7 ? 'YES' : Math.random() > 0.5 ? 'NO' : 'IRRELEVANT',
         timestamp: Date.now()
       };
-      
-      setMessages([...messages, newMessage]);
-      setInputValue('');
-      
-      // 模拟AI回复
-      setTimeout(() => {
-        const aiResponse = {
-          id: (Date.now() + 1).toString(),
-          senderId: 'ai',
-          senderName: 'AI主持人',
-          content: '这是一个有趣的提问，但还不能确定答案。',
-          type: 'judgment',
-          aiResult: Math.random() > 0.7 ? 'YES' : Math.random() > 0.5 ? 'NO' : 'IRRELEVANT',
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, aiResponse]);
-      }, 1000);
-    }
+      setMessages(prev => [...prev, aiResponse]);
+    }, 1000);
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {messages.map((message) => (
-          <Message key={message.id} message={message} />
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <div className="p-4 border-t border-white/10">
-        <div className="flex gap-2">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="输入你的问题..."
-            className="flex-1 bg-white/10 backdrop-blur-md rounded-xl px-4 py-3 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-            rows={1}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-xl px-6 py-3 font-medium hover:from-amber-600 hover:to-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            发送
-          </button>
-        </div>
-      </div>
-    </div>
+    <ChatBox 
+      initialMessages={messages} 
+      onSendMessage={handleSendMessage} 
+    />
   );
 };
 
