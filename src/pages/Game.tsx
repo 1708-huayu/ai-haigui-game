@@ -1,15 +1,21 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChatBox } from '@/components/chat'
 import { stories } from '@/data/stories'
 import { askAI, checkWinCondition } from '@/api/ai'
 
+interface ChatMessage {
+  id: string
+  role: 'user' | 'ai'
+  content: string
+}
+
 export default function Game() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const story = stories.find(s => s.id === id)
-  const [showBottom, setShowBottom] = useState(false)
   const [hasWon, setHasWon] = useState(false)
+  const messagesRef = useRef<ChatMessage[]>([])
 
   // 处理发送消息的回调
   const handleSendMessage = async (message: string): Promise<string> => {
@@ -21,6 +27,14 @@ export default function Game() {
       // 检查是否猜中真相
       if (checkWinCondition(message, story)) {
         setHasWon(true)
+        
+        // 延迟跳转到结果页面
+        setTimeout(() => {
+          navigate(`/result/${id}`, { 
+            state: { messages: messagesRef.current } 
+          })
+        }, 2000)
+        
         return `恭喜你！你猜中了真相！\n\n汤底：${story.bottom}`
       }
 
@@ -44,18 +58,25 @@ export default function Game() {
     }
   }
 
+  // 更新消息引用
+  const handleMessagesChange = (messages: ChatMessage[]) => {
+    messagesRef.current = messages
+  }
+
   // 初始消息
-  const initialMessages = [
+  const initialMessages: ChatMessage[] = [
     {
       id: '1',
-      role: 'ai' as const,
+      role: 'ai',
       content: `欢迎来到海龟汤游戏！\n\n汤面：${story?.surface || '故事加载中...'}\n\n请开始提问，我会回答"是"、"否"或"无关"。`,
     },
   ]
 
   // 查看汤底
   const handleRevealBottom = () => {
-    setShowBottom(true)
+    navigate(`/result/${id}`, { 
+      state: { messages: messagesRef.current } 
+    })
   }
 
   // 结束游戏
@@ -66,7 +87,6 @@ export default function Game() {
   // 重新开始游戏
   const handleRestart = () => {
     setHasWon(false)
-    setShowBottom(false)
     window.location.reload()
   }
 
@@ -120,6 +140,7 @@ export default function Game() {
           <ChatBox 
             initialMessages={initialMessages}
             onSendMessage={handleSendMessage}
+            onMessagesChange={handleMessagesChange}
           />
         </div>
 
@@ -172,64 +193,6 @@ export default function Game() {
             )}
           </div>
         </div>
-
-        {/* Bottom reveal modal */}
-        {showBottom && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-amber-400">
-                    {hasWon ? '恭喜你猜中真相！' : '汤底揭晓'}
-                  </h2>
-                  <button
-                    onClick={() => setShowBottom(false)}
-                    className="text-slate-400 hover:text-white transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className="bg-slate-900/50 rounded-xl p-5 border border-white/10 mb-6">
-                  <p className="text-slate-200 leading-relaxed">
-                    {story?.bottom || '汤底加载中...'}
-                  </p>
-                </div>
-
-                <div className="bg-slate-900/30 rounded-xl p-4 border border-white/5 mb-6">
-                  <h3 className="text-lg font-medium text-slate-300 mb-3">关键线索</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {story?.winConditions?.map((condition, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-300 text-sm"
-                      >
-                        {condition}
-                      </span>
-                    )) || <span className="text-slate-500">暂无关键线索</span>}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowBottom(false)}
-                    className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-200"
-                  >
-                    继续游戏
-                  </button>
-                  <button
-                    onClick={handleEndGame}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
-                  >
-                    返回大厅
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

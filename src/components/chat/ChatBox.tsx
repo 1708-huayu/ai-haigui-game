@@ -10,9 +10,14 @@ interface ChatMessage {
 interface ChatBoxProps {
   initialMessages?: ChatMessage[]
   onSendMessage?: (message: string) => Promise<string>
+  onMessagesChange?: (messages: ChatMessage[]) => void
 }
 
-export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBoxProps) {
+export default function ChatBox({ 
+  initialMessages = [], 
+  onSendMessage,
+  onMessagesChange 
+}: ChatBoxProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -27,6 +32,13 @@ export default function ChatBox({ initialMessages = [], onSendMessage }: ChatBox
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // 通知父组件消息变化
+  useEffect(() => {
+    if (onMessagesChange) {
+      onMessagesChange(messages)
+    }
+  }, [messages, onMessagesChange])
 
   // 验证问题格式
   const validateQuestion = (question: string): boolean => {
