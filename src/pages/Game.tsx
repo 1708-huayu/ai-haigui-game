@@ -1,20 +1,18 @@
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ChatBox } from '@/components/chat'
 import { stories } from '@/data/stories'
 
 export default function Game() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const story = stories.find(s => s.id === id)
+  const [showBottom, setShowBottom] = useState(false)
 
   // 处理发送消息的回调
   const handleSendMessage = async (message: string): Promise<string> => {
-    // 这里应该调用AI API，现在模拟回复
     console.log('用户提问:', message)
-    
-    // 模拟AI思考时间
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 模拟AI回复
     const responses = ['是。', '否。', '无关。', '是，但不完全。', '否，但接近了。']
     return responses[Math.floor(Math.random() * responses.length)]
   }
@@ -24,26 +22,148 @@ export default function Game() {
     {
       id: '1',
       role: 'ai' as const,
-      content: `欢迎来到海龟汤游戏！\n\n汤面：${story?.surface || '故事加载中...'}`,
+      content: `欢迎来到海龟汤游戏！\n\n汤面：${story?.surface || '故事加载中...'}\n\n请开始提问，我会回答"是"、"否"或"无关"。`,
     },
   ]
 
+  // 查看汤底
+  const handleRevealBottom = () => {
+    setShowBottom(true)
+  }
+
+  // 结束游戏
+  const handleEndGame = () => {
+    navigate('/')
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="max-w-4xl mx-auto px-4 py-8 h-screen flex flex-col">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mb-2">{story?.title || '加载中...'}</h1>
-          <p className="text-slate-400 text-sm">剧本ID: {id} | 难度: {story?.difficulty || '未知'}</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Background effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(56,189,248,0.03),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.03),transparent_40%)]" />
+      </div>
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 h-screen flex flex-col">
+        {/* Top Section - Story Info */}
+        <div className="mb-6">
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    story?.difficulty === '入门' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : story?.difficulty === '烧脑'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                  }`}>
+                    {story?.difficulty || '未知难度'}
+                  </span>
+                  <span className="text-slate-500 text-sm">剧本ID: {id}</span>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-bold mb-4">
+                  {story?.title || '加载中...'}
+                </h1>
+                <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5">
+                  <p className="text-slate-300 leading-relaxed">
+                    <span className="text-amber-400 font-medium">汤面：</span>
+                    {story?.surface || '故事加载中...'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Chat Container */}
-        <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden">
+        {/* Middle Section - Chat */}
+        <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6 min-h-0">
           <ChatBox 
             initialMessages={initialMessages}
             onSendMessage={handleSendMessage}
           />
         </div>
+
+        {/* Bottom Section - Actions */}
+        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={handleRevealBottom}
+              className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl text-white font-medium hover:from-amber-700 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              查看汤底
+            </button>
+            <button
+              onClick={handleEndGame}
+              className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              结束游戏
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom reveal modal */}
+        {showBottom && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-amber-400">汤底揭晓</h2>
+                  <button
+                    onClick={() => setShowBottom(false)}
+                    className="text-slate-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="bg-slate-900/50 rounded-xl p-5 border border-white/10 mb-6">
+                  <p className="text-slate-200 leading-relaxed">
+                    {story?.bottom || '汤底加载中...'}
+                  </p>
+                </div>
+
+                <div className="bg-slate-900/30 rounded-xl p-4 border border-white/5 mb-6">
+                  <h3 className="text-lg font-medium text-slate-300 mb-3">关键线索</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {story?.winConditions?.map((condition, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-300 text-sm"
+                      >
+                        {condition}
+                      </span>
+                    )) || <span className="text-slate-500">暂无关键线索</span>}
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowBottom(false)}
+                    className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-200"
+                  >
+                    继续游戏
+                  </button>
+                  <button
+                    onClick={handleEndGame}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                  >
+                    返回大厅
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
