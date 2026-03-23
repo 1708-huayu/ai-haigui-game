@@ -31,7 +31,7 @@ const GameCard: React.FC<GameCardProps> = ({ story }) => {
 
   const handleCardClick = (e: React.MouseEvent) => {
     // 如果点击的是按钮，则不触发卡片链接
-    if ((e.target as HTMLElement).closest('button')) {
+    if ((e.target as Element).closest('button, a')) {
       e.preventDefault();
     }
   };
@@ -43,8 +43,10 @@ const GameCard: React.FC<GameCardProps> = ({ story }) => {
         className="block h-full"
         onClick={handleCardClick}
       >
-        <FrostedCard className="h-full group transition-all duration-300 hover:scale-[1.02] hover:ring-2 hover:ring-amber-400/30 cursor-pointer h-full">
-          <div className="p-5 h-full flex flex-col">
+        <FrostedCard className="h-full group transition-all duration-300 hover:scale-[1.03] hover:ring-2 hover:ring-amber-400/50 cursor-pointer h-full overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div className="p-5 h-full flex flex-col relative z-10">
             <div className="flex justify-between items-start mb-3">
               <h3 className="font-bold text-white text-lg group-hover:text-amber-300 transition-colors line-clamp-1">
                 {story.title}
@@ -60,12 +62,35 @@ const GameCard: React.FC<GameCardProps> = ({ story }) => {
               </p>
               
               <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/10">
-                <span className="text-xs text-slate-400">
-                  预估时长: {story.estimatedTime}分钟
-                </span>
-                <GlassButton size="sm" variant="outline">
-                  开始游戏
-                </GlassButton>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-400">
+                    预估时长: {story.estimatedTime}分钟
+                  </span>
+                  <div className="flex gap-1 mt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`w-1 h-1 rounded-full ${
+                          i < Math.floor(story.estimatedTime / 5) 
+                            ? 'bg-amber-400' 
+                            : 'bg-slate-600'
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div onClick={(e) => e.stopPropagation()}>
+                  <GlassButton 
+                    size="sm" 
+                    variant="primary"
+                    className="group/btn"
+                  >
+                    <span className="group-hover/btn:scale-110 transition-transform">
+                      开始游戏 →
+                    </span>
+                  </GlassButton>
+                </div>
               </div>
             </div>
           </div>

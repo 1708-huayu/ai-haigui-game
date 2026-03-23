@@ -131,7 +131,7 @@ const Game: React.FC = () => {
 
   if (!currentStory) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-20">
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500 mb-4">
@@ -145,39 +145,59 @@ const Game: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-4">
       <div className="max-w-4xl mx-auto">
-        <header className="py-6 text-center">
+        <header className="py-6 text-center relative">
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+            <div className="w-3 h-3 bg-amber-400 rounded-full animate-pulse"></div>
+          </div>
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500 animate-fade-in">
             AI 海龟汤
           </h1>
           <p className="text-slate-300 mt-2 transition-all duration-300">
-            {gameStatus === 'won' ? '推理成功！' : 
-             gameStatus === 'ended' ? '游戏已结束' : 
-             '与AI进行推理游戏'}
+            {gameStatus === 'won' ? (
+              <span className="text-amber-400 font-semibold">推理成功！🎉</span>
+            ) : gameStatus === 'ended' ? (
+              <span className="text-slate-400">游戏已结束</span>
+            ) : (
+              <span>与AI进行推理游戏</span>
+            )}
           </p>
         </header>
 
         <div className="space-y-6">
           {/* 故事信息区域 */}
-          <FrostedCard className="p-6 animate-slide-up">
+          <FrostedCard className="p-6 animate-slide-up relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-yellow-500"></div>
             <div className="text-center mb-4">
               <h2 className="text-2xl font-bold text-white mb-2">{currentStory.title}</h2>
-              <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm">
-                {currentStory.difficulty === 'easy' ? '入门' : 
-                 currentStory.difficulty === 'medium' ? '中等' : 
-                 currentStory.difficulty === 'hard' ? '困难' : '专家'} | 
-                预估时长: {currentStory.estimatedTime}分钟
-              </span>
+              <div className="flex items-center justify-center gap-4">
+                <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm">
+                  {currentStory.difficulty === 'easy' ? '入门' : 
+                   currentStory.difficulty === 'medium' ? '中等' : 
+                   currentStory.difficulty === 'hard' ? '困难' : '专家'}
+                </span>
+                <span className="text-slate-400 text-sm">
+                  预估时长: {currentStory.estimatedTime}分钟
+                </span>
+              </div>
             </div>
             <div className="mt-4">
-              <h3 className="text-lg font-semibold text-amber-400 mb-2">汤面（已知信息）</h3>
-              <p className="text-white text-lg leading-relaxed">{currentStory.surface}</p>
+              <h3 className="text-lg font-semibold text-amber-400 mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                汤面（已知信息）
+              </h3>
+              <p className="text-white text-lg leading-relaxed bg-slate-800/30 p-4 rounded-xl border border-white/10">
+                {currentStory.surface}
+              </p>
             </div>
           </FrostedCard>
 
           {/* 聊天区域 */}
-          <FrostedCard className="h-[400px] flex flex-col animate-slide-up delay-100">
+          <FrostedCard className="h-[500px] flex flex-col animate-slide-up delay-100 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
             <ChatBox 
               initialMessages={messages} 
               onSendMessage={handleSendMessage} 
@@ -187,28 +207,38 @@ const Game: React.FC = () => {
           </FrostedCard>
 
           {/* 底部按钮区域 */}
-          <div className="flex flex-wrap justify-center gap-4 animate-slide-up delay-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up delay-200">
             <GlassButton 
               variant="secondary" 
               onClick={handleShowBottom}
               disabled={isLoading}
-              className="transform hover:scale-105 active:scale-95 transition-transform"
+              className="transform hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
               查看汤底
             </GlassButton>
             <GlassButton 
               variant="outline" 
               onClick={handleAbortGame}
               disabled={isLoading}
-              className="transform hover:scale-105 active:scale-95 transition-transform"
+              className="transform hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               放弃游戏
             </GlassButton>
             <GlassButton 
               onClick={handleEndGame}
               disabled={isLoading}
-              className="transform hover:scale-105 active:scale-95 transition-transform"
+              className="transform hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
               返回大厅
             </GlassButton>
           </div>
