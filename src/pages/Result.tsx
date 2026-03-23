@@ -12,98 +12,13 @@ const Result: React.FC = () => {
   const location = useLocation();
   const params = getUrlParams(location);
   
-  const storyId = params.storyId || 'story-001'; // 默认故事ID
+  const storyId = params.storyId || 'story-001'; // 从URL参数获取故事ID
   const [currentStory, setCurrentStory] = useState<IStory | null>(null);
   const [showReveal, setShowReveal] = useState(false);
   const [animateTitle, setAnimateTitle] = useState(false);
   
-  // 模拟对话历史
-  const [conversationHistory] = useState<IMessage[]>([
-    {
-      id: '1',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '欢迎来到海龟汤游戏！我是您的AI主持人，故事即将开始...',
-      type: 'system',
-      timestamp: Date.now() - 30000
-    },
-    {
-      id: '2',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '一个男人在酒吧喝完酒后突然死亡，身上没有外伤，法医检验发现他体内有剧毒物质。',
-      type: 'chat',
-      timestamp: Date.now() - 25000
-    },
-    {
-      id: '3',
-      senderId: 'player1',
-      senderName: '玩家',
-      content: '死者是否喝酒？',
-      type: 'chat',
-      timestamp: Date.now() - 20000
-    },
-    {
-      id: '4',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '是的，他确实喝下了那杯酒。',
-      type: 'judgment',
-      aiResult: 'YES',
-      timestamp: Date.now() - 18000
-    },
-    {
-      id: '5',
-      senderId: 'player1',
-      senderName: '玩家',
-      content: '酒有毒吗？',
-      type: 'chat',
-      timestamp: Date.now() - 15000
-    },
-    {
-      id: '6',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '是的，酒中含有剧毒。',
-      type: 'judgment',
-      aiResult: 'YES',
-      timestamp: Date.now() - 13000
-    },
-    {
-      id: '7',
-      senderId: 'player1',
-      senderName: '玩家',
-      content: '是他自己下毒的吗？',
-      type: 'chat',
-      timestamp: Date.now() - 10000
-    },
-    {
-      id: '8',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '不，不是他自己下的毒。',
-      type: 'judgment',
-      aiResult: 'NO',
-      timestamp: Date.now() - 8000
-    },
-    {
-      id: '9',
-      senderId: 'player1',
-      senderName: '玩家',
-      content: '酒是他自带的吗？',
-      type: 'chat',
-      timestamp: Date.now() - 5000
-    },
-    {
-      id: '10',
-      senderId: 'ai',
-      senderName: 'AI主持人',
-      content: '是的，酒是他自己带来的。',
-      type: 'judgment',
-      aiResult: 'YES',
-      timestamp: Date.now() - 3000
-    }
-  ]);
+  // 从location state获取对话历史，如果不存在则使用默认值
+  const conversationHistory: IMessage[] = location.state?.conversationHistory || [];
 
   useEffect(() => {
     // 获取故事信息
@@ -164,9 +79,13 @@ const Result: React.FC = () => {
               <div className="my-6">
                 <h3 className="text-lg font-semibold text-amber-400 mb-3">对话历史</h3>
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-                  {conversationHistory.map((msg) => (
-                    <Message key={msg.id} message={msg} />
-                  ))}
+                  {conversationHistory.length > 0 ? (
+                    conversationHistory.map((msg) => (
+                      <Message key={msg.id} message={msg} />
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-center py-4">暂无对话记录</p>
+                  )}
                 </div>
               </div>
             </FrostedCard>

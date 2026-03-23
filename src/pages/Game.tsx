@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import FrostedCard from '../components/common/FrostedCard';
 import GlassButton from '../components/common/GlassButton';
 import ChatBox from '../components/game/ChatBox';
@@ -9,10 +9,11 @@ import { getAIJudgment } from '../api';
 
 const Game: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [currentStory, setCurrentStory] = useState<IStory | null>(null);
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [showBottom, setShowBottom] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'ended'>('playing'); // 游戏状态管理
 
   useEffect(() => {
     // 根据URL参数获取故事
@@ -43,7 +44,7 @@ const Game: React.FC = () => {
   }, [id]);
 
   const handleSendMessage = async (content: string) => {
-    if (isLoading) return; // 防止重复提交
+    if (isLoading || gameStatus !== 'playing') return; // 防止重复提交或在游戏结束后继续提问
     
     // 添加用户消息
     const userMessage: IMessage = {
@@ -79,12 +80,13 @@ const Game: React.FC = () => {
       
       setMessages(prev => [...prev, aiResponse]);
       
-      // 如果AI判断玩家获胜，则显示胜利信息
+      // 如果AI判断玩家获胜，则更新游戏状态
       if (aiResult.isWin) {
+        setGameStatus('won');
         setTimeout(() => {
-          alert('恭喜！你成功推理出了真相！');
-          setShowBottom(true);
-        }, 500);
+          // 跳转到结果页面
+          navigate(`/result?storyId=${currentStory?.id}`, { state: { conversationHistory: messages, finalMessage: aiResponse } });
+        }, 1500);
       }
     } catch (error: any) {
       console.error('AI调用错误:', error);
@@ -106,12 +108,20 @@ const Game: React.FC = () => {
   };
 
   const handleShowBottom = () => {
-    setShowBottom(true);
+    // 跳转到结果页面
+    navigate(`/result?storyId=${currentStory?.id}`, { state: { conversationHistory: messages } });
   };
 
   const handleEndGame = () => {
-    // 在实际应用中，这里会导航到总结页面
-    alert('游戏结束！');
+    // 返回大厅
+    navigate('/');
+  };
+
+  const handleAbortGame = () => {
+    // 确认是否要放弃游戏
+    if (window.confirm('确定要放弃当前游戏吗？')) {
+      navigate('/');
+    }
   };
 
   if (!currentStory) {
@@ -136,7 +146,11 @@ const Game: React.FC = () => {
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">
             AI 海龟汤
           </h1>
-          <p className="text-slate-300 mt-2">与AI进行推理游戏</p>
+          <p className="text-slate-300 mt-2">
+            {gameStatus === 'won' ? '推理成功！' : 
+             gameStatus === 'ended' ? '游戏已结束' : 
+             '与AI进行推理游戏'}
+          </p>
         </header>
 
         <div className="space-y-6">
@@ -167,7 +181,7 @@ const Game: React.FC = () => {
           </FrostedCard>
 
           {/* 底部按钮区域 */}
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <GlassButton 
               variant="secondary" 
               onClick={handleShowBottom}
@@ -177,43 +191,19 @@ const Game: React.FC = () => {
             </GlassButton>
             <GlassButton 
               variant="outline" 
+              onClick={handleAbortGame}
+              disabled={isLoading}
+            >
+              放弃游戏
+            </GlassButton>
+            <GlassButton 
               onClick={handleEndGame}
               disabled={isLoading}
             >
-              结束游戏
+              返回大厅
             </GlassButton>
           </div>
         </div>
-
-        {/* 汤底弹窗 */}
-        {showBottom && currentStory && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="relative w-full max-w-2xl">
-              <FrostedCard className="p-8">
-                <h3 className="text-2xl font-bold text-amber-400 mb-4 text-center">真相揭晓</h3>
-                
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-white mb-2">汤底（真相）</h4>
-                  <p className="text-white text-lg leading-relaxed">{currentStory.bottom}</p>
-                </div>
-                
-                <div className="flex justify-center gap-4">
-                  <GlassButton 
-                    variant="secondary" 
-                    onClick={() => setShowBottom(false)}
-                  >
-                    关闭
-                  </GlassButton>
-                  <GlassButton 
-                    onClick={handleEndGame}
-                  >
-                    结束游戏
-                  </GlassButton>
-                </div>
-              </FrostedCard>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
