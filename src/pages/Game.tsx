@@ -20,7 +20,16 @@ export default function Game() {
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'reveal' | 'end' | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const messagesRef = useRef<ChatMessage[]>([])
+
+  // 模拟加载延迟
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
 
   // 防止意外离开页面
   useEffect(() => {
@@ -156,6 +165,51 @@ export default function Game() {
 
   const status = getStatusDisplay()
 
+  // 加载状态
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full animate-spin" />
+            <div className="absolute inset-2 border-4 border-purple-500/30 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+            <div className="absolute inset-4 border-4 border-amber-500/40 rounded-full animate-spin" style={{ animationDuration: '1s' }} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-8 h-8 text-blue-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">加载中...</h2>
+          <p className="text-slate-400">正在准备你的推理之旅</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 故事不存在
+  if (!story) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">故事不存在</h2>
+          <p className="text-slate-400 mb-6">找不到指定的剧本，请返回大厅选择其他故事。</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+          >
+            返回大厅
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Background effects */}
@@ -166,19 +220,19 @@ export default function Game() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 h-screen flex flex-col">
         {/* Top Section - Story Info */}
-        <div className="mb-6">
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+        <div className="mb-6 animate-fade-in">
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-6 hover:border-white/20 transition-all duration-300">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    story?.difficulty === '入门' 
+                    story.difficulty === '入门' 
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      : story?.difficulty === '烧脑'
+                      : story.difficulty === '烧脑'
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                         : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                   }`}>
-                    {story?.difficulty || '未知难度'}
+                    {story.difficulty}
                   </span>
                   <span className="text-slate-500 text-sm">剧本ID: {id}</span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color} border border-current/20`}>
@@ -186,12 +240,12 @@ export default function Game() {
                   </span>
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold mb-4">
-                  {story?.title || '加载中...'}
+                  {story.title}
                 </h1>
                 <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5">
                   <p className="text-slate-300 leading-relaxed">
                     <span className="text-amber-400 font-medium">汤面：</span>
-                    {story?.surface || '故事加载中...'}
+                    {story.surface}
                   </p>
                 </div>
               </div>
@@ -200,7 +254,7 @@ export default function Game() {
         </div>
 
         {/* Middle Section - Chat */}
-        <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6 min-h-0">
+        <div className="flex-1 bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 overflow-hidden mb-6 min-h-0 animate-slide-up">
           <ChatBox 
             initialMessages={initialMessages}
             onSendMessage={handleSendMessage}
@@ -209,13 +263,13 @@ export default function Game() {
         </div>
 
         {/* Bottom Section - Actions */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4">
+        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-white/10 p-4 animate-fade-in">
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {gameStatus === 'playing' ? (
               <>
                 <button
                   onClick={handleRevealBottom}
-                  className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl text-white font-medium hover:from-amber-700 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl text-white font-medium hover:from-amber-700 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -225,7 +279,7 @@ export default function Game() {
                 </button>
                 <button
                   onClick={handleEndGame}
-                  className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -237,7 +291,7 @@ export default function Game() {
               <>
                 <button
                   onClick={handleRestart}
-                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl text-white font-medium hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl text-white font-medium hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -246,7 +300,7 @@ export default function Game() {
                 </button>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -273,6 +327,23 @@ export default function Game() {
         onCancel={handleCancel}
         variant={confirmAction === 'end' ? 'danger' : 'warning'}
       />
+
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.5s ease-out;
+        }
+      `}</style>
     </div>
   )
 }

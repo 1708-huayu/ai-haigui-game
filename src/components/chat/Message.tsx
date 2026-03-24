@@ -9,11 +9,11 @@ export default function Message({ message }: MessageProps) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 group`}>
       {/* AI Avatar */}
       {!isUser && (
         <div className="flex-shrink-0 mr-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 transition-transform duration-200 group-hover:scale-110">
             <svg
               className="w-4 h-4 text-white"
               fill="none"
@@ -33,10 +33,10 @@ export default function Message({ message }: MessageProps) {
 
       {/* Message Bubble */}
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        className={`max-w-[80%] md:max-w-[70%] rounded-2xl px-4 py-3 transition-all duration-200 group-hover:shadow-lg ${
           isUser
-            ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20'
-            : 'bg-white/10 backdrop-blur-lg border border-white/20 text-slate-200 shadow-2xl shadow-black/30'
+            ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30'
+            : 'bg-white/10 backdrop-blur-lg border border-white/20 text-slate-200 shadow-2xl shadow-black/30 hover:bg-white/15 hover:border-white/30'
         }`}
       >
         <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -47,7 +47,7 @@ export default function Message({ message }: MessageProps) {
       {/* User Avatar */}
       {isUser && (
         <div className="flex-shrink-0 ml-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 transition-transform duration-200 group-hover:scale-110">
             <svg
               className="w-4 h-4 text-white"
               fill="none"
