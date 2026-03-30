@@ -12,6 +12,11 @@ export default function GameCard({ story }: GameCardProps) {
     navigate(`/game/${story.id}`)
   }
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/edit/${story.id}`)
+  }
+
   const getDifficultyColor = (difficulty: IStory['difficulty']) => {
     switch (difficulty) {
       case '入门':
@@ -32,6 +37,17 @@ export default function GameCard({ story }: GameCardProps) {
     >
       {/* Frosted glass background */}
       <div className="absolute inset-0 rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 shadow-2xl shadow-black/50 transition-all duration-300 group-hover:bg-white/15 group-hover:border-white/30" />
+      
+      {/* Edit button */}
+      <button
+        onClick={handleEdit}
+        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 opacity-0 group-hover:opacity-100"
+        title="编辑剧本"
+      >
+        <svg className="w-4 h-4 text-slate-300 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      </button>
       
       {/* Content */}
       <div className="relative p-6">

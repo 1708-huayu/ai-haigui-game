@@ -1,6 +1,9 @@
 import type { IStory } from '@/types/models'
 
-export const stories: IStory[] = [
+const STORAGE_KEY = 'turtle_soup_stories'
+
+// 默认故事数据
+const defaultStories: IStory[] = [
   {
     id: '1',
     title: '酒吧的水',
@@ -43,10 +46,79 @@ export const stories: IStory[] = [
   },
 ]
 
+// 从本地存储加载故事，如果没有则使用默认数据
+const loadStories = (): IStory[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch (error) {
+    console.error('加载故事数据失败:', error)
+  }
+  return defaultStories
+}
+
+// 保存故事到本地存储
+const saveStories = (storiesData: IStory[]): void => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(storiesData))
+  } catch (error) {
+    console.error('保存故事数据失败:', error)
+  }
+}
+
+// 初始化故事数据
+export let stories: IStory[] = loadStories()
+
+// 获取所有故事
+export const getAllStories = (): IStory[] => {
+  return stories
+}
+
+// 根据ID获取故事
 export const getStoryById = (id: string): IStory | undefined => {
   return stories.find((story) => story.id === id)
 }
 
+// 根据难度获取故事
 export const getStoriesByDifficulty = (difficulty: IStory['difficulty']): IStory[] => {
   return stories.filter((story) => story.difficulty === difficulty)
+}
+
+// 更新故事
+export const updateStory = (updatedStory: IStory): boolean => {
+  const index = stories.findIndex(story => story.id === updatedStory.id)
+  if (index !== -1) {
+    stories[index] = { ...updatedStory }
+    saveStories(stories)
+    return true
+  }
+  return false
+}
+
+// 添加新故事
+export const addStory = (newStory: Omit<IStory, 'id'>): IStory => {
+  const id = Date.now().toString()
+  const story: IStory = { ...newStory, id }
+  stories = [...stories, story]
+  saveStories(stories)
+  return story
+}
+
+// 删除故事
+export const deleteStory = (id: string): boolean => {
+  const index = stories.findIndex(story => story.id === id)
+  if (index !== -1) {
+    stories = stories.filter(story => story.id !== id)
+    saveStories(stories)
+    return true
+  }
+  return false
+}
+
+// 重置为默认故事
+export const resetToDefault = (): void => {
+  stories = [...defaultStories]
+  saveStories(stories)
 }
