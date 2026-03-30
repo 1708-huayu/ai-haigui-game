@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChatBox } from '@/components/chat'
 import ConfirmModal from '@/components/common/ConfirmModal'
+import VictoryModal from '@/components/common/VictoryModal'
 import { stories } from '@/data/stories'
 import { askAI, checkWinCondition } from '@/api/ai'
 
@@ -19,6 +20,7 @@ export default function Game() {
   const story = stories.find(s => s.id === id)
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing')
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showVictoryModal, setShowVictoryModal] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'reveal' | 'end' | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const messagesRef = useRef<ChatMessage[]>([])
@@ -59,17 +61,7 @@ export default function Game() {
       // 检查是否猜中真相
       if (checkWinCondition(message, story)) {
         setGameStatus('won')
-        
-        // 延迟跳转到结果页面
-        setTimeout(() => {
-          navigate(`/result/${id}`, { 
-            state: { 
-              messages: messagesRef.current,
-              gameStatus: 'won'
-            } 
-          })
-        }, 2000)
-        
+        setShowVictoryModal(true)
         return `恭喜你！你猜中了真相！\n\n汤底：${story.bottom}`
       }
 
@@ -141,6 +133,19 @@ export default function Game() {
   const handleCancel = () => {
     setShowConfirmModal(false)
     setConfirmAction(null)
+  }
+
+  // 胜利弹窗 - 再来一局
+  const handleVictoryPlayAgain = () => {
+    setShowVictoryModal(false)
+    setGameStatus('playing')
+    window.location.reload()
+  }
+
+  // 胜利弹窗 - 返回大厅
+  const handleVictoryEnd = () => {
+    setShowVictoryModal(false)
+    navigate('/')
   }
 
   // 重新开始游戏
@@ -326,6 +331,15 @@ export default function Game() {
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         variant={confirmAction === 'end' ? 'danger' : 'warning'}
+      />
+
+      {/* Victory Modal */}
+      <VictoryModal
+        isOpen={showVictoryModal}
+        title={story?.title || ''}
+        bottom={story?.bottom || ''}
+        onPlayAgain={handleVictoryPlayAgain}
+        onEnd={handleVictoryEnd}
       />
 
       <style>{`

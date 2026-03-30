@@ -79,8 +79,7 @@ export const askAI = async (question: string, story: IStory): Promise<AIResponse
 // 调用后端接口（代理AI API）
 export const askAIReal = async (question: string, story: IStory): Promise<AIResponse> => {
   try {
-    const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3000'
-    const response = await fetch(`${backendUrl}/api/chat`, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
