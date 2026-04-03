@@ -59,7 +59,8 @@ export default function Game() {
 
     try {
       // 检查是否猜中真相
-      if (checkWinCondition(message, story)) {
+      const isWin = await checkWinCondition(message, story)
+      if (isWin) {
         setGameStatus('won')
         setShowVictoryModal(true)
         return `恭喜你！你猜中了真相！\n\n汤底：${story.bottom}`

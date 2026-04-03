@@ -3,6 +3,25 @@ import type { IStory } from '@/types/models'
 // AI回答类型
 export type AIResponse = '是' | '否' | '无关'
 
+// 请求超时时间：6分钟
+const REQUEST_TIMEOUT = 6 * 60 * 1000
+
+// 带超时的 fetch 封装
+const fetchWithTimeout = async (url: string, options: RequestInit): Promise<Response> => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+    return response
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 
 
 // 解析AI回答，确保只返回"是"、"否"或"无关"
@@ -79,7 +98,7 @@ export const askAI = async (question: string, story: IStory): Promise<AIResponse
 // 调用后端接口（代理AI API）
 export const askAIReal = async (question: string, story: IStory): Promise<AIResponse> => {
   try {
-    const response = await fetch('/api/chat', {
+    const response = await fetchWithTimeout('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -157,23 +176,47 @@ export const askAIWithCache = async (question: string, story: IStory): Promise<A
   return response
 }
 
-// 判断玩家是否猜中真相
-export const checkWinCondition = (question: string, story: IStory): boolean => {
-  const lowerQuestion = question.toLowerCase()
-  
-  // 检查是否包含所有关键线索
-  const allConditionsMatched = story.winConditions.every(condition => 
-    lowerQuestion.includes(condition.toLowerCase())
-  )
-  
-  // 检查问题是否描述了整个故事
-  const bottomKeywords = story.bottom.split(/[，。！？、]/).filter(k => k.length > 2)
-  const matchedKeywords = bottomKeywords.filter(keyword => 
-    lowerQuestion.includes(keyword.toLowerCase())
-  )
-  
-  // 如果匹配了大部分关键线索和汤底关键词，认为猜中
-  return allConditionsMatched || matchedKeywords.length >= bottomKeywords.length * 0.7
+// 判断玩家是否猜中真相（调用大模型接口）
+export const checkWinCondition = async (answer: string, story: IStory): Promise<boolean> => {
+  try {
+    const response = await fetchWithTimeout('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: `【系统判定】请判断玩家的答案是否猜中了故事真相。只回答"是"或"否"。
+
+故事标题：${story.title}
+汤面：${story.surface}
+汤底：${story.bottom}
+关键线索：${story.winConditions.join('、')}
+
+玩家答案：${answer}
+
+请判断玩家的答案是否基本正确地描述了汤底的真相。只回答"是"或"否"，不要添加任何解释。`,
+        story: {
+          id: story.id,
+          title: story.title,
+          surface: story.surface,
+          bottom: story.bottom,
+          winConditions: story.winConditions,
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('验证答案接口请求失败:', response.status)
+      return false
+    }
+
+    const data = await response.json()
+    const result = (data.answer || data.content || '').trim()
+    return result === '是'
+  } catch (error) {
+    console.error('验证答案接口调用失败:', error)
+    return false
+  }
 }
 
 // 验证问题格式（是否是非题）
